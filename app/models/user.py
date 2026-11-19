@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime, timezone, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, String, Uuid
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
 
-class Users(Base):
+class User(Base):
     __tablename__ = "users"
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
