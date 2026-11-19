@@ -7,12 +7,15 @@ class DatabaseSetting(BaseSettings):
     DATABASE_URL : str
 
 
-model_config = SettingsConfigDict(
+    model_config = SettingsConfigDict(
     env_file=".env",
     env_file_encoding= "utf-8",
-    extra= "ignore ",
-)
+    extra="ignore",
+    )
 
-setting= DatabaseSetting
+setting= DatabaseSetting()
 
 Database_url = setting.DATABASE_URL
+
+
+
