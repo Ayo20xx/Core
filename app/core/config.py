@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class database_setting(BaseSettings):
+class DatabaseSetting(BaseSettings):
     APP_NAME : str 
     ENVIRONMENT :str 
     DATABASE_URL : str
@@ -13,5 +13,6 @@ model_config = SettingsConfigDict(
     extra= "ignore ",
 )
 
+setting= DatabaseSetting
 
-Database_url = database_setting.DATABASE_URL
+Database_url = setting.DATABASE_URL
