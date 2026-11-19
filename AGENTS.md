@@ -16,13 +16,16 @@ FastAPI + PostgreSQL + SQLAlchemy banking core. `docs/requirements.md` is the au
 - Bare `pytest` fails with `ModuleNotFoundError: No module named 'app'` (no packaging or conftest path setup) — always use `python -m pytest`.
 - Mark new async tests with `@pytest.mark.asyncio`; there is no pytest config changing pytest-asyncio's default strict mode.
 
-## Migrations — currently broken
+## Database and migrations
 
-- `alembic/env.py` injects the asyncpg `DATABASE_URL` into a synchronous `engine_from_config`, so `alembic current/upgrade/revision` crashes with `sqlalchemy.exc.MissingGreenlet`. It needs an async engine (`async_engine_from_config` + `connection.run_sync`) or a separate sync driver URL.
-- No revisions exist yet (`alembic/versions/` is absent), and models are annotation-only stubs (`app/models/user.py` has no `Column`s), so `--autogenerate` has nothing to detect.
+- `app/models/user.py` defines `Users` (`__tablename__ = "users"`) using SQLAlchemy 2.x `Mapped[...]`/`mapped_column(...)`; `app/models/__init__.py` imports it so `Base.metadata` sees the table. Import every new model there or Alembic autogenerate will miss it.
+- `alembic/env.py` uses `async_engine_from_config` + `connection.run_sync` because `DATABASE_URL` is asyncpg; a synchronous `engine_from_config` fails with `MissingGreenlet`. Keep model imports in `env.py` as well.
+- Revision `044a1e648a26` ("create users table") exists in `alembic/versions/` and is applied; `alembic current` reports it as head.
 - `alembic.ini` sets `script_location = %(here)s/alembic` and `prepend_sys_path = .`; its placeholder `sqlalchemy.url` is overwritten at runtime by `env.py`.
 
 ## Layout and conventions
 
-- `app/main.py` is empty — no FastAPI app object or routes yet. Intended layering: `app/models` → `app/repositories` → `app/services` → `app/api/v1`, with `app/db/base.py` (DeclarativeBase) and `app/db/session.py` (async engine, `SessionLocal`, `get_session` dependency).
+- `app/main.py` is empty — no FastAPI app object or routes yet. Intended layering: `app/models` → `app/schemas` → `app/repositories` → `app/services` → `app/api/v1`, with `app/db/base.py` (DeclarativeBase) and `app/db/session.py` (async engine, `SessionLocal`, `get_session` dependency).
+- Keep the file `app/models/user.py` and the class name `Users` (plural); do not rename them to `Customer`.
+- Pydantic schemas are in `app/schemas/user.py` (`UsersCreate`, `UsersRead`), exported via `app/schemas/__init__.py`. `EmailStr` requires `email-validator` (pinned). `UsersCreate` lowercases email because the DB unique index is case-sensitive; `UsersRead` omits `password_hash` deliberately.
 - Import the settings singleton as `from app.core.config import setting` and the URL as `Database_url` (unusual lowercase name); both are used that way in `app/db/session.py` and `alembic/env.py`.
