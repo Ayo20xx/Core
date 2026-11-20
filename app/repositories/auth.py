@@ -1,7 +1,9 @@
 from models import User
 from schemas import UsersCreate
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.security import hash_password
+
 
 class auth :
     def register(body:UsersCreate,session:AsyncSession):
