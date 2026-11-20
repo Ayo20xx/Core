@@ -29,3 +29,22 @@ FastAPI + PostgreSQL + SQLAlchemy banking core. `docs/requirements.md` is the au
 - Keep the file `app/models/user.py` and the class name `User` (singular, as committed); do not rename to `Customer` or `Users`. The Pydantic schemas currently keep plural names (`UsersCreate`, `UsersRead`) in `app/schemas/user.py`, exported via `app/schemas/__init__.py`.
 - `EmailStr` requires `email-validator` (pinned). `UsersCreate` lowercases email because the DB unique index is case-sensitive; `UsersRead` omits `password_hash` deliberately.
 - Import the settings singleton as `from app.core.config import setting` and the URL as `Database_url` (unusual lowercase name); both are used that way in `app/db/session.py` and `alembic/env.py`.
+
+
+What to do now  
+1. Add a refresh_tokens table (or a token column on users with expires_at, revoked_at).  
+2. Implement the refresh endpoint: hash the incoming token, compare to DB, check expiry, rotate, issue new access‑token + new refresh token.  
+3. Keep access‑token JWT very short (10‑20 min) so you rarely need to revoke it; if you must, just delete the refresh row and the client will stop getting new access tokens.  
+4. Skip a blacklist for now; it’s only needed if you ever need to revoke a specific JWT before its natural expiry.
+If you’d like, I can write the opaque‑refresh storage + rotation snippet for you, or just the login‑only access‑token flow first.
+▣  Build · Nemotron 3.5 Lightning Free · 2m 42s
+hm let me take my time to decide 
++ Thought: 1.7s
+No rush at all — your project, your pace. 
+Where you are right now (as of today):
+- ✅ Steps 1–5 done (model, migration, schemas, basic plumbing).  
+- ⏳ Steps 6–14 pending; you can tackle them whenever you’re ready.  
+- Docker daemon is stopped — start it with docker compose up -d db whenever you restart work.  
+- app/api/deps.py (SessionDep alias) and argon2-cffi are installed; the rest of the service/repository/endpoint is yours to implement whenever you say.
+Whenever you’re ready, the roadmap, the “write by hand / delegate” checklist, and the interview‑question bank are all still here. Just message me or run .venv/bin/python -m pytest whenever you want to continue.
+Good luck, and feel free to ping me whenever you’re ready to move forward.
