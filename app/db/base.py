@@ -11,40 +11,40 @@ class Base(DeclarativeBase):
 
 ModelType = TypeVar("ModelType", bound=Base)
 
-class BaseRepository (Generic[ModelType]):
 
-    def __init__(self,model:ModelType,session:AsyncSession ):
+class BaseRepository(Generic[ModelType]):
+
+    def __init__(self, model: ModelType):
         self.model = model
-        self.session = session
 
-    async def get (self, id:UUID):
+    async def add(self, session: AsyncSession, body: ModelType) -> dict:
+        self.session = session
+        session.add(body)
+        await session.commit()
+        await session.refresh(body)
+        return body
+
+    async def get(self, session: AsyncSession, id: UUID):
+        self.session = session
         return self.session.get(id)
 
-    async def exists(self,**filters:Any)->bool:
+    async def exists(self, session: AsyncSession, **filters: Any) -> bool:
+        self.session = session
         Conditions = []
-        for key,value in filters.items() :
-            Column = getattr(self.model,key)
-            Conditions.append(Column==value)
-        statement=select(self.model).where(*Conditions)
-        data=await self.session.execute(statement)
+        for key, value in filters.items():
+            Column = getattr(self.model, key)
+            Conditions.append(Column == value)
+        statement = select(self.model).where(*Conditions)
+        data = await session.execute(statement)
         return data.first is not None
 
-    
-    async def add(self,body:ModelType)->dict :
-       self.session.add(body)
-       await self.session.commit()
-       await self.session.refresh(body)
-       return body 
-    
-    async def update(self,body:ModelType)->dict:
-       self.session.add(body)
-       await self.session.commit()
-       await self.session.refresh(body)
-       return body 
+    async def update(self, session: AsyncSession, body: ModelType) -> dict:
+        self.session = session
+        session.add(body)
+        await session.commit()
+        await session.refresh(body)
+        return body
 
-    async def delete(self,body:ModelType)->dict:
-        self.session.delete(body)
-
-        
-
-
+    async def delete(self, session: AsyncSession, body: ModelType) -> dict:
+        self.session = session
+        session.delete(body)
