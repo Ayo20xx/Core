@@ -1,3 +1,3 @@
 
 class EmailException(Exception):
-    pass
+   pass
