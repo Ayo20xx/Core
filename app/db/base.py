@@ -36,13 +36,13 @@ class BaseRepository(Generic[ModelType]):
         result = await session.execute(statement)
         return result.first() is not None
 
-    async def update(self, session: AsyncSession, body: ModelType) -> dict:
+    async def update(self, session: AsyncSession, body: ModelType)  -> ModelType:
 
         session.add(body)
         await session.commit()
         await session.refresh(body)
         return body
 
-    async def delete(self, session: AsyncSession, body: ModelType) -> dict:
+    async def delete(self, session: AsyncSession, body: ModelType) -> None:
         session.delete(body)
         await session.commit()
