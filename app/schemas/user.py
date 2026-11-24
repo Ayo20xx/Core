@@ -32,3 +32,8 @@ class UsersRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class VerificationCodeCreate(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)

@@ -2,10 +2,10 @@ from sqlalchemy import exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import EmailException
+from app.core.security import hash_password
+from app.models.user import User
 from app.repositories.auth_repository import AuthRepository
 from app.schemas.user import UsersCreate
-from app.models.user import User
-from app.core.security import hash_password
 
 
 class AuthService:
