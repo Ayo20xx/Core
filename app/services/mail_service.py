@@ -1,10 +1,11 @@
-import os
 import ssl
 from email.message import EmailMessage
 from pathlib import Path
 
 import aiosmtplib
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from app.core.config import smtp_setting
 
 # Templates directory
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -20,13 +21,18 @@ jinja_env = Environment(
 
 class MailService:
     def __init__(self):
-        self.smtp_host = os.getenv("SMTP_HOST", "smtp.fastmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        self.smtp_user = os.getenv("SMTP_USER", "")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "")
+        self.smtp_host = smtp_setting.smtp_host
+        self.smtp_port = smtp_setting.smtp_port
+        self.smtp_user = smtp_setting.smtp_user
+        self.smtp_password = smtp_setting.smtp_password
+
+    def _validate_settings(self) -> None:
+        if not self.smtp_user or not self.smtp_password:
+            raise ValueError("SMTP_USER and SMTP_PASSWORD must be configured")
 
     async def send(self, to_email: str, subject: str, template_name: str, **context) -> None:
         """Send an email using a Jinja2 template."""
+        self._validate_settings()
         template = jinja_env.get_template(template_name)
         html_content = template.render(**context)
 
@@ -49,7 +55,8 @@ class MailService:
 
     async def send_verification_code(self, to_email: str, code: str) -> None:
         """Send a verification code email."""
-        html_content = await jinja_env.get_template("verification_email.html").render(code=code)
+        self._validate_settings()
+        html_content = jinja_env.get_template("verification_email.html").render(code=code)
 
         message = EmailMessage()
         message["From"] = f"CORE <{self.smtp_user}>"

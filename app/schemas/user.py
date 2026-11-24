@@ -37,3 +37,7 @@ class UsersRead(BaseModel):
 class VerificationCodeCreate(BaseModel):
     email: EmailStr
     code: str = Field(min_length=6, max_length=6)
+
+
+class VerificationEmailRequest(BaseModel):
+    email: EmailStr
