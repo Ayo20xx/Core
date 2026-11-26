@@ -1,5 +1,5 @@
-import secrets
 import hashlib
+import secrets
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -19,10 +19,10 @@ from app.schemas.user import (
     LoginRequest,
     TokenResponse,
     UsersCreate,
+    UserSessionRead,
     UsersRead,
     VerificationCodeCreate,
     VerificationEmailRequest,
-    UserSessionRead,
 )
 from app.services.auth_service import AuthService
 from app.services.mail_service import MailService
