@@ -3,12 +3,11 @@ from datetime import UTC, datetime
 
 from argon2.exceptions import VerifyMismatchError
 from fastapi import APIRouter, HTTPException
-
 import aiosmtplib
+
 from app.api.deps import SessionDep
 from app.core.exceptions import EmailException
 from app.core.security import hash_password, verify_password_hash
-from app.models.redis import redis_client
 from app.repositories.auth_repository import AuthRepository
 from app.schemas.user import (
     UsersCreate,
@@ -18,10 +17,15 @@ from app.schemas.user import (
 )
 from app.services.auth_service import AuthService
 from app.services.mail_service import MailService
+from app.core.config import RedisSettings
+
+redis_setting = RedisSettings()
+redis_client = redis_setting.redis_client()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 CODE_TTL_SECONDS = 900  # 15 minutes
+MAX_VERIFICATION_ATTEMPTS = 5
 
 
 async def _send_verification_code(email: str) -> None:
@@ -57,17 +61,31 @@ async def register(session: SessionDep, body: UsersCreate) -> UsersRead:
 async def verify_code(session: SessionDep, body: VerificationCodeCreate) -> UsersRead:
     email = str(body.email).strip().lower()
     key = f"verification:code:{email}"
+    attempts_key = f"verification:attempts:{email}"
 
     code_hash = await redis_client.get(key)
     if code_hash is None:
         raise HTTPException(status_code=400, detail="Code expired or not found")
 
+    attempts = int(await redis_client.get(attempts_key) or 0)
+    if attempts >= MAX_VERIFICATION_ATTEMPTS:
+        await redis_client.delete(key)
+        raise HTTPException(status_code=429, detail="Too many verification attempts")
+
     try:
         verify_password_hash(body.code, code_hash)
     except VerifyMismatchError:
+        attempts = await redis_client.incr(attempts_key)
+        await redis_client.expire(attempts_key, CODE_TTL_SECONDS)
+        if attempts >= MAX_VERIFICATION_ATTEMPTS:
+            await redis_client.delete(key)
+            raise HTTPException(status_code=429, detail="Too many verification attempts")
         raise HTTPException(status_code=400, detail="Invalid code")
 
-    await redis_client.delete(key)
+    consumed_hash = await redis_client.getdel(key)
+    if consumed_hash != code_hash:
+        raise HTTPException(status_code=400, detail="Code expired or already used")
+    await redis_client.delete(attempts_key)
 
     repo = AuthRepository()
     user = await repo.get_by_email(session, email=email)

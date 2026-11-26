@@ -1,5 +1,5 @@
-import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from redis.asyncio import Redis as RedisClient
 
 class DatabaseSetting(BaseSettings):
     APP_NAME: str
@@ -29,6 +29,15 @@ class SMTPSettings(BaseSettings):
 
 smtp_setting = SMTPSettings()
 
-TEMPLATES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "templates"
-)
+
+class RedisSettings(BaseSettings):
+    redis_url: str = "redis://localhost:6379/0"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    def redis_client(self) -> RedisClient:
+        return RedisClient.from_url(self.redis_url, decode_responses=True)
