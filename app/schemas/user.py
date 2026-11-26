@@ -2,7 +2,21 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+)
+
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+)
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
@@ -36,7 +50,7 @@ class UsersRead(BaseModel):
 
 class VerificationCodeCreate(BaseModel):
     email: EmailStr
-    code: str = Field(pattern=r"^[0-9]{6}$")
+    code: str = Field(min_length=6, max_length=6)
 
 
 class VerificationEmailRequest(BaseModel):

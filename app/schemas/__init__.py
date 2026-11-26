@@ -3,6 +3,9 @@ from app.schemas.user import (
     UsersRead,
     VerificationCodeCreate,
     VerificationEmailRequest,
+    LoginRequest,
+    TokenResponse,
+    UserSessionRead,
 )
 
 __all__ = [
@@ -10,4 +13,7 @@ __all__ = [
     "UsersRead",
     "VerificationCodeCreate",
     "VerificationEmailRequest",
+    "LoginRequest",
+    "TokenResponse",
+    "UserSessionRead",
 ]

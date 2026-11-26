@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr
 from redis.asyncio import Redis as RedisClient
+
 
 class DatabaseSetting(BaseSettings):
     APP_NAME: str
@@ -14,6 +16,7 @@ class DatabaseSetting(BaseSettings):
 
 setting = DatabaseSetting()
 Database_url = setting.DATABASE_URL
+
 
 class SMTPSettings(BaseSettings):
     smtp_host: str = "smtp.fastmail.com"
@@ -41,3 +44,18 @@ class RedisSettings(BaseSettings):
 
     def redis_client(self) -> RedisClient:
         return RedisClient.from_url(self.redis_url, decode_responses=True)
+
+
+class AuthSettings(BaseSettings):
+    jwt_secret_key: SecretStr = Field(min_length=32)
+    access_token_ttl_minutes: int = Field(default=15, gt=0)
+    refresh_token_ttl_days: int = Field(default=30, gt=0)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+auth_setting = AuthSettings()

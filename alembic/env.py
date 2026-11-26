@@ -9,7 +9,7 @@ from alembic import context
 
 from app.core.config import setting
 from app.db.base import Base
-from app.models import User
+from app.models import RefreshToken, User, UserSession
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

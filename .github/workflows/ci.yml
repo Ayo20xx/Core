@@ -37,6 +37,7 @@ jobs:
       ENVIRONMENT: test
       DATABASE_URL: postgresql+asyncpg://core_user:core_dev_password@localhost:5442/core_db
       REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET_KEY: CI_ONLY_signing_key_do_not_use_outside_tests_0123456789
 
     steps:
       - uses: actions/checkout@v4

@@ -4,12 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from fastapi import HTTPException
 from pydantic import ValidationError
 from redis.exceptions import ConnectionError as RedisConnectionError
+from starlette.responses import Response
 
 from app.api.v1 import auth
-from app.schemas.user import VerificationCodeCreate
+from app.schemas.user import LoginRequest, VerificationCodeCreate
 
 
 class FakeRedis:
@@ -96,6 +98,7 @@ def make_user():
         email="customer@example.com",
         first_name="Test",
         last_name="Customer",
+        password_hash=PasswordHasher().hash("correct horse battery staple"),
         email_verified_at=None,
         is_active=True,
         created_at=datetime.now(UTC),
@@ -286,3 +289,30 @@ def test_verification_code_requires_six_ascii_digits():
     for code in ("12345", "1234567", "12a456", "１２３４５６"):
         with pytest.raises(ValidationError):
             VerificationCodeCreate(email="customer@example.com", code=code)
+
+
+@pytest.mark.asyncio
+async def test_login_rate_limits_failed_passwords(monkeypatch, verification_setup):
+    _redis, session, user = verification_setup
+
+    def reject_password(_password: str, _password_hash: str):
+        raise VerifyMismatchError
+
+    monkeypatch.setattr(auth, "verify_password_hash", reject_password)
+    request = SimpleNamespace(
+        client=SimpleNamespace(host="203.0.113.10"),
+        headers={"user-agent": "test"},
+    )
+    body = LoginRequest(
+        email=user.email,
+        password="wrong-password",
+    )
+
+    for _ in range(auth.LOGIN_EMAIL_FAILURE_LIMIT):
+        with pytest.raises(HTTPException) as error:
+            await auth.login(session, body, request, Response())
+        assert error.value.status_code == 401
+
+    with pytest.raises(HTTPException) as error:
+        await auth.login(session, body, request, Response())
+    assert error.value.status_code == 429
