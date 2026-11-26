@@ -30,29 +30,6 @@ class MailService:
         if not self.smtp_user or not self.smtp_password:
             raise ValueError("SMTP_USER and SMTP_PASSWORD must be configured")
 
-    async def send(self, to_email: str, subject: str, template_name: str, **context) -> None:
-        """Send an email using a Jinja2 template."""
-        self._validate_settings()
-        template = jinja_env.get_template(template_name)
-        html_content = template.render(**context)
-
-        message = EmailMessage()
-        message["From"] = f"CORE <{self.smtp_user}>"
-        message["To"] = to_email
-        message["Subject"] = subject
-        message.set_content("Your verification code")  # plain text fallback
-        message.add_alternative(html_content, subtype="html")
-
-        context_obj = ssl.create_default_context()
-        async with aiosmtplib.SMTP(
-            hostname=self.smtp_host,
-            port=self.smtp_port,
-            start_tls=True,
-            ssl_context=context_obj,
-        ) as smtp:
-            await smtp.login(self.smtp_user, self.smtp_password)
-            await smtp.send_message(message)
-
     async def send_verification_code(self, to_email: str, code: str) -> None:
         """Send a verification code email."""
         self._validate_settings()

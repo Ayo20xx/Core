@@ -36,7 +36,7 @@ class UsersRead(BaseModel):
 
 class VerificationCodeCreate(BaseModel):
     email: EmailStr
-    code: str = Field(min_length=6, max_length=6)
+    code: str = Field(pattern=r"^[0-9]{6}$")
 
 
 class VerificationEmailRequest(BaseModel):

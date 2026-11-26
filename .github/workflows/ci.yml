@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: core_user
+          POSTGRES_PASSWORD: core_dev_password
+          POSTGRES_DB: core_db
+        ports:
+          - 5442:5432
+        options: >-
+          --health-cmd "pg_isready -U core_user -d core_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_NAME: CORE
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://core_user:core_dev_password@localhost:5442/core_db
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run migrations
+        run: python -m alembic upgrade head
+
+      - name: Run tests
+        run: python -m pytest -q
