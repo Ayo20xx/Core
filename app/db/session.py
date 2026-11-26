@@ -8,7 +8,7 @@ from app.core.config import Database_url
 
 engine = create_async_engine(
     url= Database_url,
-    echo= True 
+    echo=False,
 
 )
 

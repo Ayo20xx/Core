@@ -47,7 +47,7 @@ class MailService:
             hostname=self.smtp_host,
             port=self.smtp_port,
             start_tls=True,
-            ssl_context=context_obj,
+            tls_context=context_obj,
         ) as smtp:
             await smtp.login(self.smtp_user, self.smtp_password)
             await smtp.send_message(message)
