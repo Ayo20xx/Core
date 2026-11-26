@@ -114,6 +114,7 @@ async def resend_verification_code(
         raise HTTPException(status_code=409, detail="Email is already verified")
 
     try:
+        await redis_client.delete(f"verification:attempts:{email}")
         await _send_verification_code(email)
     except (ValueError, aiosmtplib.SMTPException, OSError) as exc:
         raise HTTPException(
