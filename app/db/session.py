@@ -8,7 +8,7 @@ from app.core.config import Database_url
 
 engine = create_async_engine(
     url= Database_url,
-    echo= True 
+    echo=False,
 
 )
 
@@ -19,5 +19,5 @@ SessionLocal= async_sessionmaker(
 )
 
 async def get_session():
-    async with SessionLocal as session:
+    async with SessionLocal() as session:
         yield session 
