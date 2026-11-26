@@ -43,8 +43,38 @@ class UsersRead(BaseModel):
 
 class VerificationCodeCreate(BaseModel):
     email: EmailStr
-    code: str = Field(min_length=6, max_length=6)
+    code: str = Field(pattern=r"^[0-9]{6}$")
 
 
 class VerificationEmailRequest(BaseModel):
     email: EmailStr
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=128)
+    device_name: str | None = Field(default=None, max_length=100)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return str(value).lower()
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class UserSessionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    device_name: str | None
+    user_agent: str | None
+    created_at: datetime
+    last_used_at: datetime
+    expires_at: datetime
+    revoked_at: datetime | None
+    is_current: bool = False
